@@ -264,9 +264,9 @@ autoplot(UKDriverDeaths) +
   guides(colour=guide_legend(title="Previsões"))
 
 
-################
-### Resíduos ###
-################
+  ##################################################
+  ### Resíduos Utilizando Métodos de Previsão ###
+  ##################################################
 
 #Resíduos utilizando o método média
 res_meanf <- residuals(meanf(UKDriverDeaths))
@@ -302,3 +302,66 @@ gghistogram(res_rwf + ggtitle("Histograma dos residuos utilizando o método drif
 
 checkresiduals(res)
 
+
+  ##############################
+  ### Intervalos de Previsao ###
+  ##############################
+
+#Intervalos de Previsão utilizando o método média
+autoplot(meanf(UKDriverDeaths)) +  #Nível de confiança padrão -> level = c(80, 95)
+  ggtitle("Intervalos de Previsão utilizando o método média")
+
+#Intervalos de Previsão utilizando o método naive
+autoplot(naive(UKDriverDeaths)) +  #Nível de confiança padrão -> 80 e 95
+  ggtitle("Intervalos de Previsão utilizando o método naive")
+
+#Intervalos de Previsão utilizando o método naive sazonal
+autoplot(snaive(UKDriverDeaths)) +  #Nível de confiança padrão -> 80 e 95
+  ggtitle("Intervalos de Previsão utilizando o método naive sazonal")
+
+#Intervalos de Previsão utilizando o método drift
+autoplot(rwf(UKDriverDeaths)) +  #Nível de confiança padrão -> 80 e 95
+  ggtitle("Intervalos de Previsão utilizando o método drift")
+
+
+  #################################################################################
+  ### Previsoes utilizando a decomposição STL e os métodos de Previsão ###
+  #################################################################################
+
+#Previsoes utilizando a decomposição STL e o método média
+fit_stl_meanf <- stl(UKDriverDeaths, t.window=13, robust = TRUE)
+prev_stl_meanf <- forecast(fit_stl_meanf, method = "meanf", level = c(95)) #apenas indicamos o metodo para previsao #Nível de confiança de 95%
+autoplot(prev_stl_meanf) + ylab("")
+
+#Previsoes utilizando a decomposição STL e o método naive
+fit_stl_naive <- stl(UKDriverDeaths, t.window=13, robust = TRUE)
+prev_stl_naive <- forecast(fit_stl_naive, method = "naive", level = c(95)) #apenas indicamos o metodo para previsao
+autoplot(prev_stl_naive) + ylab("")
+
+#Previsoes utilizando a decomposição STL e o método naive sazonal
+fit_stl_snaive <- stl(UKDriverDeaths, t.window=13, robust = TRUE)
+prev_stl_snaive <- forecast(fit_stl_snaive, method = "snaive", level = c(95)) #apenas indicamos o metodo para previsao
+autoplot(prev_stl_snaive) + ylab("")
+
+#Previsoes utilizando a decomposição STL e o método drift
+fit_stl_rwf <- stl(UKDriverDeaths, t.window=13, robust = TRUE)
+prev_stl_rwf <- forecast(fit_stl_rwf, method = "rwf", level = c(95)) #apenas indicamos o metodo para previsao
+autoplot(prev_stl_rwf) + ylab("")
+
+
+  ###################################################
+  ### Previsões com stlf e os métodos de Previsão ###
+  ###################################################
+??method
+fcast_stlf_naive <- stlf(UKDriverDeaths, method = "naive", level = c(95))
+autoplot(fcast)
+
+fcast_stlf <- stlf(UKDriverDeaths, level = c(95)) #usa o método padrão de alisamento exponencial
+autoplot(fcast2)
+
+fcast3 <- stlf(UKDriverDeaths, level = c(95), lambda = "auto")
+autoplot(fcast3)
+fcast3$lambda
+
+fcast4 <- stlf(elecequip, level = c(95), lambda = 0)
+autoplot(fcast4, ylim = c(40,140))
