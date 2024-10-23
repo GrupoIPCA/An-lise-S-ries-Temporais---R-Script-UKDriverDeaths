@@ -220,40 +220,85 @@ autoplot(stldec2)
 ### Métodos de Previsão ###
 ###########################
 
-meanf(UKDriverDeaths, 2) #Previsão utilizando a média
+#Forecast - 1º Verificar melhor método de previsão retirar o último ano e prever
 
-rwf(UKDriverDeaths, 2) 
-
-snaive(UKDriverDeaths, drift = T, 2) #Previsão utilizando o drift
-
-
-#Forecast
+UKDriverDeaths_menos_1_ano <- window(UKDriverDeaths, start = 1992, end = c(2006,4))
 
 autoplot(UKDriverDeaths) +
-  autolayer(meanf(UKDriverDeaths, h=8),
-            series="Média", PI=FALSE) + #prediction intervals
-  autolayer(naive(UKDriverDeaths, h=8),
-            series="Naive", PI=FALSE) +
-  autolayer(snaive(UKDriverDeaths, h=8),
-            series="Naive sazonal", PI=FALSE) +
-  autolayer(rwf(UKDriverDeaths, drift=T,h=8),
-            series="Drift", PI=FALSE) +
+  
+  autolayer(meanf(UKDriverDeaths_menos_1_ano, h = 365), #Previsão utilizando o método média #h = 365 é a previsão para 365 dias
+            series = "Média", PI = FALSE) + #PI = Prediction Intervals
+  
+  autolayer(naive(UKDriverDeaths_menos_1_ano, h = 365), #Previsão utilizando o método naive
+            series = "Naive", PI = FALSE) +
+  
+  autolayer(snaive(UKDriverDeaths_menos_1_ano, h = 365), #Previsão utilizando o método naive sazonal
+            series = "Naive sazonal", PI = FALSE) +
+  
+  autolayer(rwf(UKDriverDeaths_menos_1_ano,drift=T, h = 365), #Previsão utilizando o método drift
+            series = "Drift", PI = FALSE) +
+  
   ggtitle("Previsões para a produção trimestral de cerveja") +
-  xlab("Ano") + ylab("Megalitros") +
+  xlab("Tempo (anos)") + ylab("Nº de Mortes") +
+  guides(colour=guide_legend(title = "Previsões"))
+
+
+#Forecast - 2º fazer as previsões futuras na séries
+
+autoplot(UKDriverDeaths) +
+  
+  autolayer(meanf(UKDriverDeaths, h = 365), #Previsão utilizando o método média
+            series = "Média", PI = FALSE) + # PI = Prediction Intervals
+  
+  autolayer(naive(UKDriverDeaths, h = 365), #Previsão utilizando o método naive 
+            series = "Naive", PI = FALSE) +
+  
+  autolayer(snaive(UKDriverDeaths, h = 365), #Previsão utilizando o método naive sazonal
+            series = "Naive sazonal", PI = FALSE) +
+  
+  autolayer(rwf(UKDriverDeaths, drift = T, h = 365), #Previsão utilizando o método drift
+            series = "Drift", PI = FALSE) +
+  
+  ggtitle("Previsões Para as Mortes Rodoviárias na UK") +
+  xlab("Tempo (anos)") + ylab("Nº de Mortes") +
   guides(colour=guide_legend(title="Previsões"))
 
-#Retirar o último ano e prever
-UKDriverDeaths_menos_1_ano <- window(UKDriverDeaths,start=1992,end=c(2006,4))
 
-autoplot(beer2) +
-  autolayer(meanf(UKDriverDeaths_menos_1_ano, h=4),
-            series="Média", PI=FALSE) + #prediction intervals
-  autolayer(naive(UKDriverDeaths_menos_1_ano, h=4),
-            series="Naive", PI=FALSE) +
-  autolayer(snaive(UKDriverDeaths_menos_1_ano, h=4),
-            series="Naive sazonal", PI=FALSE) +
-  autolayer(rwf(UKDriverDeaths_menos_1_ano,drift=T, h=4),
-            series="Drift", PI=FALSE) +
-  ggtitle("Previsões para a produção trimestral de cerveja") +
-  xlab("Ano") + ylab("Megalitros") +
-  guides(colour=guide_legend(title="Previsões"))
+################
+### Resíduos ###
+################
+
+#Resíduos utilizando o método média
+res_meanf <- residuals(meanf(UKDriverDeaths))
+autoplot(res_meanf) + xlab("Dia") + ylab("") +
+  ggtitle("Resíduos utilizando o método média")
+
+gghistogram(res_meanf + ggtitle("Histograma dos residuos utilizando o método média"))
+
+
+#Resíduos utilizando o método naive
+res_naive <- residuals(naive(UKDriverDeaths))
+autoplot(res_naive) + xlab("Dia") + ylab("") +
+  ggtitle("Resíduos utilizando o método naive")
+
+gghistogram(res_naive + ggtitle("Histograma dos residuos utilizando o metodo naive"))
+
+
+#Resíduos utilizando o método naive sazonal
+res_snaive <- residuals(snaive(UKDriverDeaths))
+autoplot(res_snaive) + xlab("Dia") + ylab("") +
+  ggtitle("Resíduos utilizando o método naive sazonal")
+
+gghistogram(res_snaive + ggtitle("Histograma dos residuos utilizando o método naive sazonal"))
+
+
+#Resíduos utilizando o método drift
+res_rwf <- residuals(rwf(UKDriverDeaths))
+autoplot(res_rwf) + xlab("Dia") + ylab("") +
+  ggtitle("Resíduos utilizando o método drift")
+
+gghistogram(res_rwf + ggtitle("Histograma dos residuos utilizando o método drift"))
+
+
+checkresiduals(res)
+
