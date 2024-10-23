@@ -1,0 +1,259 @@
+##########################################
+### Objetivos Para o Trabalho de Grupo ###
+##########################################
+
+#– efetuar a análise exploratória ajustada à série temporal de interesse;
+
+#- identificar potenciais problemas que interfiram na qualidade dos dados e efetuar o tratamento devido;
+
+#– avaliar comparativamente modelos alternativos para séries temporais;
+
+#- ajustar um modelo e respetiva validação;
+
+#-aplicar os modelos estocásticos para previsão.
+
+
+#Bibliotecas Usadas
+library(trend)
+library(fpp2)
+library(forecast)
+library(gridExtra)
+library(ggplot2)
+library(Kendall)
+
+# Dados da série temporal
+data()
+data("UKDriverDeaths")
+class("UKDriverDeaths")
+dados_st <- window(UKDriverDeaths)
+dados_st
+
+#Gráfico da série temporal
+autoplot(UKDriverDeaths) + ggtitle("UKDriverDeaths: Road Casualties in Great Britain 1969-84") + ylab("Nº de mortes") + xlab("Tempo (anos)")
+
+
+#############################
+### Medidas de Correlação ###
+#############################
+  
+  #####################
+  ### Correlogramas ###
+  #####################
+
+ggAcf(UKDriverDeaths, lag=120, xlab="Desfasamento", ylab="Correlações", main="Correlograma")
+acf(UKDriverDeaths, lag=120, xlab="Desfasamento", ylab="Correlações", main="Correlograma") #Grafico apresenta tendencia e sazonalidade
+
+
+  #####################################################
+  ### Tendência: Teste de Tendência de Mann-Kendall ###
+  #####################################################
+
+mk.test(UKDriverDeaths)
+
+  #Mann-Kendall trend test
+  
+  data:  UKDriverDeaths
+  z = -6.2692, n = 192, p-value = 3.629e-10
+  alternative hypothesis: true S is not equal to 0
+  sample estimates:
+    S          varS           tau 
+  -5.582000e+03  7.925027e+05 -3.045946e-01 
+  
+#1º Hipóteses
+  #H0: Não há tendência
+  #H1: Há tendência
+
+#2º Estatística de teste
+  #Zobs = (S + 1)/σ (S < 0)
+  
+#3º Valor observado
+  #Zobs = -6.2692
+  
+#4º Nível de significância
+  #α = 5%
+
+#5º Conclusão
+  #Como valor-p = 3.629e-10 que é menor que α = 5% = 0,05, logo
+  #rejeita-se H0 e por isso, a série tem tendência. Como S<0,
+  #essa tendência é decrescente
+
+  
+  ####################
+  ### Sazonalidade ###
+  ####################
+  
+  #A série apresenta um forte padrão sazonal: alto em dezembro e baixo em fevereiro
+
+
+  
+#################################################################
+### Homogeneidade: Teste de Variância de Mann-Whitney-Pettitt ###
+#################################################################
+
+pettitt.test(UKDriverDeaths)
+  
+  #Pettitt's test for single change-point detection
+
+  data:  UKDriverDeaths
+  U* = 5178, p-value = 3.029e-10
+  alternative hypothesis: two.sided
+  sample estimates:
+  probable change point at time K 
+                               72 
+  
+#1º Hipóteses
+  #H0: Não há mudança da variância
+  #H1: Há mudança da variância
+  
+#2º Estatística de teste
+  #U1 = Soma(i)(K=1) Soma(n)(j=i+1) (Xk - Xi)
+  
+#3º Valor observado
+  #Uobs = 5178
+  
+#4º Nível de significância
+  #α = 5%
+  
+#5º Conclusão
+  #Como valor-p = 3.029e-10 que é menor que α = 5% = 0,05, logo
+  #rejeita-se H0 e por isso, há mudança na variância da série
+
+                               
+                               
+#############################
+### Decomposição clássica ###
+#############################
+                                 
+  ##################################################################
+  ### Cálculo manual dos índices sazonais - decomposição Aditiva ###
+  ##################################################################
+
+# 1º passo - obter tendência por médias móveis de ordem 4 (trimestral)
+ma <- ma(UKDriverDeaths, order = 4)  # Calcular médias móveis de ordem 4
+ma
+lines(ma, col = "red", lwd = 2)  # Adicionando a tendência ao gráfico
+
+# 2º passo - Subtrair os dados pela tendência X_t - T_t
+aux5 <- round(UKDriverDeaths - ma, 4)  # Arredonda a 4 casas decimais
+aux5
+
+# 3º passo - Calcular a média por mês (trimestres) dos dados sem a tendência
+# Garantir que o número de dados seja múltiplo de 4 para evitar erro
+if (length(UKDriverDeaths) %% 4 == 0) {
+  aux6 <- colMeans(matrix(aux5, ncol = 4, byrow = TRUE), na.rm = TRUE)
+} else {
+  stop("O número de elementos em 'dados' não é múltiplo de 4.")
+}
+aux6
+
+# 4º passo - Modelo aditivo: a média dos índices sazonais deve ser próxima de 0 (não de 1)
+aux7 <- mean(aux6)
+aux7
+#-0.1354167
+
+# Fazer a correção subtraindo os índices sazonais pela média anterior
+indice_ajustados <- aux6 - aux7
+mean(indice_ajustados)
+indice_ajustados
+
+# Decomposição usando método aditivo
+adit <- decompose(UKDriverDeaths, type = "additive")
+adit
+plot(adit)  # Plotar a decomposição
+
+
+
+  #########################################################################
+  ### Cálculo manual dos índices sazonais - decomposição Multiplicativa ###
+  #########################################################################
+
+# 1º passo - obter tendência por médias móveis de ordem 4 (trimestral)
+ma <- ma(UKDriverDeaths, order = 4)  # Calcular médias móveis de ordem 4
+ma
+lines(ma, col = "red", lwd = 2)  # Adicionando a tendência ao gráfico
+
+# 2º passo - Subtrair os dados pela tendência X_t / T_t
+aux8 <- round(UKDriverDeaths / ma, 4)  # Arredonda a 4 casas decimais
+aux8
+
+# 3º passo - Calcular a média por mês (trimestres) dos dados sem a tendência
+# Garantir que o número de dados seja múltiplo de 4 para evitar erro
+if (length(UKDriverDeaths) %% 4 == 0) {
+  aux9 <- colMeans(matrix(aux8, ncol = 4, byrow = TRUE), na.rm = TRUE)
+} else {
+  stop("O número de elementos em 'dados' não é múltiplo de 4.")
+}
+aux9
+
+# 4º passo - Modelo multiplicativo: a média dos índices sazonais deve ser próxima de 1 (100%)
+aux10 <- mean(aux6)
+aux10
+#-0.7380319
+
+# Fazer a correção subtraindo os índices sazonais pela média anterior
+indice_ajustados <- aux9 / aux10
+mean(indice_ajustados)
+indice_ajustados
+
+# Decomposição usando método multiplicativo
+mult <- decompose(UKDriverDeaths, type = "multiplicative")
+mult
+plot(mult)  # Plotar a decomposição
+
+
+
+########################
+### Decomposição STL ###
+########################
+
+stldec <- stl(UKDriverDeaths, t.window=13, s.window="periodic", robust=TRUE) #É aditivo. A componente sazonal não varia
+autoplot(stldec)
+
+stldec1 <- stl(UKDriverDeaths, t.window=13, s.window=13, robust=TRUE)#É multiplicativo. A componente sazonal varia
+autoplot(stldec1)
+
+stldec2 <- mstl(UKDriverDeaths) #Função automática
+autoplot(stldec2)
+
+
+###########################
+### Métodos de Previsão ###
+###########################
+
+meanf(UKDriverDeaths, 2) #Previsão utilizando a média
+
+rwf(UKDriverDeaths, 2) 
+
+snaive(UKDriverDeaths, drift = T, 2) #Previsão utilizando o drift
+
+
+#Forecast
+
+autoplot(UKDriverDeaths) +
+  autolayer(meanf(UKDriverDeaths, h=8),
+            series="Média", PI=FALSE) + #prediction intervals
+  autolayer(naive(UKDriverDeaths, h=8),
+            series="Naive", PI=FALSE) +
+  autolayer(snaive(UKDriverDeaths, h=8),
+            series="Naive sazonal", PI=FALSE) +
+  autolayer(rwf(UKDriverDeaths, drift=T,h=8),
+            series="Drift", PI=FALSE) +
+  ggtitle("Previsões para a produção trimestral de cerveja") +
+  xlab("Ano") + ylab("Megalitros") +
+  guides(colour=guide_legend(title="Previsões"))
+
+#Retirar o último ano e prever
+UKDriverDeaths_menos_1_ano <- window(UKDriverDeaths,start=1992,end=c(2006,4))
+
+autoplot(beer2) +
+  autolayer(meanf(UKDriverDeaths_menos_1_ano, h=4),
+            series="Média", PI=FALSE) + #prediction intervals
+  autolayer(naive(UKDriverDeaths_menos_1_ano, h=4),
+            series="Naive", PI=FALSE) +
+  autolayer(snaive(UKDriverDeaths_menos_1_ano, h=4),
+            series="Naive sazonal", PI=FALSE) +
+  autolayer(rwf(UKDriverDeaths_menos_1_ano,drift=T, h=4),
+            series="Drift", PI=FALSE) +
+  ggtitle("Previsões para a produção trimestral de cerveja") +
+  xlab("Ano") + ylab("Megalitros") +
+  guides(colour=guide_legend(title="Previsões"))
