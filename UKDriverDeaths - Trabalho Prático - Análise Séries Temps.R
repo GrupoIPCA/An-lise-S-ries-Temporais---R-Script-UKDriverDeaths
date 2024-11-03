@@ -10,7 +10,7 @@
 
 #- ajustar um modelo e respetiva validação;
 
-#-aplicar os modelos estocásticos para previsão.
+#- aplicar os modelos estocásticos para previsão.
 
 
 #Bibliotecas Usadas
@@ -226,16 +226,16 @@ UKDriverDeaths_menos_1_ano <- window(UKDriverDeaths, start = 1992, end = c(2006,
 
 autoplot(UKDriverDeaths) +
   
-  autolayer(meanf(UKDriverDeaths_menos_1_ano, h = 365), #Previsão utilizando o método média #h = 365 é a previsão para 365 dias
+  autolayer(meanf(UKDriverDeaths_menos_1_ano, h = 12), #Previsão utilizando o método média #h = 12 é a previsão para 12 meses
             series = "Média", PI = FALSE) + #PI = Prediction Intervals
   
-  autolayer(naive(UKDriverDeaths_menos_1_ano, h = 365), #Previsão utilizando o método naive
+  autolayer(naive(UKDriverDeaths_menos_1_ano, h = 12), #Previsão utilizando o método naive
             series = "Naive", PI = FALSE) +
   
-  autolayer(snaive(UKDriverDeaths_menos_1_ano, h = 365), #Previsão utilizando o método naive sazonal
+  autolayer(snaive(UKDriverDeaths_menos_1_ano, h = 12), #Previsão utilizando o método naive sazonal
             series = "Naive sazonal", PI = FALSE) +
   
-  autolayer(rwf(UKDriverDeaths_menos_1_ano,drift=T, h = 365), #Previsão utilizando o método drift
+  autolayer(rwf(UKDriverDeaths_menos_1_ano,drift=T, h = 12), #Previsão utilizando o método drift
             series = "Drift", PI = FALSE) +
   
   ggtitle("Previsões para a produção trimestral de cerveja") +
@@ -247,16 +247,16 @@ autoplot(UKDriverDeaths) +
 
 autoplot(UKDriverDeaths) +
   
-  autolayer(meanf(UKDriverDeaths, h = 365), #Previsão utilizando o método média
+  autolayer(meanf(UKDriverDeaths, h = 12), #Previsão utilizando o método média
             series = "Média", PI = FALSE) + # PI = Prediction Intervals
   
-  autolayer(naive(UKDriverDeaths, h = 365), #Previsão utilizando o método naive 
+  autolayer(naive(UKDriverDeaths, h = 12), #Previsão utilizando o método naive 
             series = "Naive", PI = FALSE) +
   
-  autolayer(snaive(UKDriverDeaths, h = 365), #Previsão utilizando o método naive sazonal
+  autolayer(snaive(UKDriverDeaths, h = 12), #Previsão utilizando o método naive sazonal
             series = "Naive sazonal", PI = FALSE) +
   
-  autolayer(rwf(UKDriverDeaths, drift = T, h = 365), #Previsão utilizando o método drift
+  autolayer(rwf(UKDriverDeaths, drift = T, h = 12), #Previsão utilizando o método drift
             series = "Drift", PI = FALSE) +
   
   ggtitle("Previsões Para as Mortes Rodoviárias na UK") +
@@ -352,16 +352,177 @@ autoplot(prev_stl_rwf) + ylab("")
   ###################################################
   ### Previsões com stlf e os métodos de Previsão ###
   ###################################################
-??method
-fcast_stlf_naive <- stlf(UKDriverDeaths, method = "naive", level = c(95))
-autoplot(fcast)
 
-fcast_stlf <- stlf(UKDriverDeaths, level = c(95)) #usa o método padrão de alisamento exponencial
-autoplot(fcast2)
+    ### Previsões com stlf sem e com Box-Cox e com transformação logarítmica ###
+      
+      ### Sem Box-Cox ###
 
-fcast3 <- stlf(UKDriverDeaths, level = c(95), lambda = "auto")
-autoplot(fcast3)
-fcast3$lambda
+fcast_stlf_snaive <- stlf(UKDriverDeaths, method = "snaive")
+autoplot(fcast_stlf_snaive)
+res_stlf_snaive <- fcast_stlf_snaive$residuals #verificar os residuos
+checkresiduals(res_stlf_snaive)
 
-fcast4 <- stlf(elecequip, level = c(95), lambda = 0)
-autoplot(fcast4, ylim = c(40,140))
+fcast_stlf <- stlf(UKDriverDeaths) #usa o método padrão de alisamento exponencial padrão
+autoplot(fcast_stlf)
+res_stlf <- fcast_stlf$residuals #verificar os residuos
+checkresiduals(res_stlf)
+
+
+      ### Com Box-Cox ###
+
+fcast_stlf_snaive_bc <- stlf(UKDriverDeaths, method = "snaive", lambda = "auto") #utiliza o método Box-Cox
+autoplot(fcast_stlf_snaive_bc)
+res_stlf_snaive_bc <- fcast_stlf_snaive_bc$residuals #verificar os residuos
+checkresiduals(res_stlf_snaive_bc)
+fcast3$lambda #revela o valor de lambda utilizado
+
+fcast_stlf_bc <- stlf(UKDriverDeaths, lambda = "auto") #usa o método padrão de alisamento exponencial padrão
+autoplot(fcast_stlf_bc)
+res_stlf_bc <- fcast_stlf_bc$residuals #verificar os residuos
+checkresiduals(res_stlf_bc)
+
+      ### com transformação logarítmica ###
+
+fcast_stlf_snaive_tl <- stlf(UKDriverDeaths, method = "snaive", lambda = 0) #aplica uma transformação logarítmica
+autoplot(fcast_stlf_snaive_tl, ylim = c(40,140))
+res_stlf_snaive_tl <- fcast_stlf_snaive_tl$residuals #verificar os residuos
+checkresiduals(res_stlf_snaive_tl)
+fcast3$lambda #revela o valor de lambda utilizado
+
+fcast_stlf_tl <- stlf(UKDriverDeaths, lambda = 0) #usa o método padrão de alisamento exponencial padrão com uma transformação logarítmica
+autoplot(fcast_stlf_tl)
+res_stlf_tl <- fcast_stlf_tl$residuals #verificar os residuos
+checkresiduals(res_stlf_tl)
+
+
+
+
+
+
+#Previsões utilizando o Alisamento Exponencial Simples
+aliex_simples <- ses(UKDriverDeaths, h = 12) #previsão para 12 meses utilizando Alis. Exp. Simples
+aliex_simples
+
+summary(aliex_simples) #perimite obter alpha e l_0
+
+accuracy(aliex_simples) #devolve todo o tipo de erros
+### Estes Tipos de Erros São:
+    # ME (Erro Médio)
+    # RMSE (Erro Quadrático Médio)
+    # MAE (Erro Absoluto Médio)
+    # MPE (Erro Percentual Médio)
+    # MAPE (Erro Percentual Absoluto Médio)
+    # MASE (Erro Absoluto Padronizado Médio)
+    # ACF1: autocorrelação do erro na defasagem 1, indicando se há padrão residual não capturado pelo modelo
+
+aliex_simples$fitted #coluna x_(t+1) | x_t previsão em t+l = nível em t
+
+autoplot (aliex_simples) +
+  autolayer(fitted(aliex_simples), series="Fitted") +
+  ylab("Nº de mortes") + xlab("Year")
+
+
+#Previsões com alisamento exponencial utilizando o método de Holt (simples)
+mortes <- window(UKDriverDeaths)
+autoplot(mortes)
+
+aliex_holt <- holt(mortes, h = 24) #previsão utilizando alisamento exponencial com tendência para 24 meses (2 anos)
+aliex_holt
+
+autoplot(aliex_holt) #mostra gráfico com a previsão para 2 anos com alisamento exponencial usando método de Holt
+summary(aliex_holt)
+aliex_holt$fitted
+
+
+#Previsões com alisamento exponencial utilizando o método de Holt damped (amortecido)
+
+aliex_holt_damped_phi <- holt(mortes, damped = TRUE, phi = 0.9, h = 24) #Método de Holt amortecido
+summary(aliex_holt_damped_phi)
+
+autoplot(mortes) +
+  autolayer(aliex_holt, series = "Método de Holt", PI = FALSE) +
+  autolayer(aliex_holt_damped_phi, series = "Método de Holt amortecido", PI = FALSE) +
+  ggtitle("Previsões") + xlab("Year") +
+  ylab("Nº de mortes") +
+  guides(colour=guide_legend(title = "Previsões"))
+
+
+aliex_holt_damped <- holt(mortes, damped = TRUE, h = 24) # Método de Holt amortecido sem definir phi, onde ele é estimado
+summary(aliex_holt_damped)
+
+autoplot(mortes) +
+  autolayer(aliex_holt, series = "Método de Holt", PI = FALSE) +
+  autolayer(aliex_holt_damped, series = "Método de Holt amortecido", PI = FALSE) +
+  ggtitle("Previsões") + xlab("Year") +
+  ylab("Nº de mortes") +
+  guides(colour=guide_legend(title = "Previsões"))
+
+
+#Método de Holt-Winters: Previsões aditivas e multiplicativas e com damped
+
+hw_adit <- hw(UKDriverDeaths, seasonal = "additive")
+hw_mult <- hw(UKDriverDeaths, seasonal = "multiplicative")
+autoplot(UKDriverDeaths) +
+  autolayer(hw_adit, series = "Holt-Winters previsões aditivas", PI = FALSE) +
+  autolayer(hw_mult, series = "Holt-Winters previsões multiplicativas", PI = FALSE) +
+  xlab("Ano") + ylab("Nº de mortes") +
+  ggtitle("Turistas internacionais") +
+  guides(colour=guide_legend(title = "Previsões"))
+
+summary(hw_adit)
+summary(hw_mult)
+accuracy(hw_adit)
+accuracy(hw_mult)
+
+
+# Modelo Holt-Winters com sazonalidade multiplicativa e amortecimento retirando 1 ano
+fc_multiplicativo <- hw(UKDriverDeaths_menos_1_ano, damped = TRUE, seasonal = "multiplicative", h = 12)
+
+# Plot das previsões multiplicativas com intervalo de confiança
+autoplot(UKDriverDeaths) +
+  autolayer(fc_multiplicativo, series = "HW multi damped", PI = TRUE) +
+  guides(colour = guide_legend(title = "Previsões Mensais"))
+
+# Modelo Holt-Winters com sazonalidade aditiva e amortecimento
+fc_aditivo <- hw(UKDriverDeaths_menos_1_ano, damped = TRUE, seasonal = "additive", h = 12)
+
+# Plot das previsões aditivas com intervalo de confiança
+autoplot(UKDriverDeaths) +
+  autolayer(fc_aditivo, series = "HW addit damped", PI = TRUE) +
+  guides(colour = guide_legend(title = "Previsões Mensais"))
+
+# Resumo dos modelos para observar parâmetros e erros
+summary(fc_multiplicativo)
+summary(fc_aditivo)
+
+
+#Selação do Modelo
+#Critério de Informação de Akaike (AIC)
+#Critério de Informação Bayesiano (BIC)
+#O modelo com o menor AIC e BIC é geralmente considerado o melhor, 
+#pois indica uma combinação ideal entre ajuste e simplicidade (penalizando modelos mais complexos).
+
+# Calculando AIC e BIC para o modelo com sazonalidade multiplicativa
+AIC_multiplicativo <- AIC(fc_multiplicativo$model)
+BIC_multiplicativo <- BIC(fc_multiplicativo$model)
+
+# Calculando AIC e BIC para o modelo com sazonalidade aditiva
+AIC_aditivo <- AIC(fc_aditivo$model)
+BIC_aditivo <- BIC(fc_aditivo$model)
+
+# Exibindo os valores de AIC e BIC para comparação
+cat("Modelo Multiplicativo: AIC =", AIC_multiplicativo, ", BIC =", BIC_multiplicativo, "\n")
+cat("Modelo Aditivo: AIC =", AIC_aditivo, ", BIC =", BIC_aditivo, "\n")
+
+# Comparando os valores
+if (AIC_multiplicativo < AIC_aditivo) {
+  cat("Modelo multiplicativo tem menor AIC\n")
+} else {
+  cat("Modelo aditivo tem menor AIC\n")
+}
+
+if (BIC_multiplicativo < BIC_aditivo) {
+  cat("Modelo multiplicativo tem menor BIC\n")
+} else {
+  cat("Modelo aditivo tem menor BIC\n")
+}
