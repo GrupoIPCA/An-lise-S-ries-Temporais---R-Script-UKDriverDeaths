@@ -206,23 +206,23 @@ plot(mult)  # Plotar a decomposição
 ### Decomposição STL ###
 ########################
 
-stldec <- stl(UKDriverDeaths, t.window=13, s.window="periodic", robust=TRUE) #É aditivo. A componente sazonal não varia
+stldec <- stl(UKDriverDeaths, t.window = 13, s.window = "periodic", robust = TRUE) #É aditivo. A componente sazonal não varia
 autoplot(stldec)
 
-stldec1 <- stl(UKDriverDeaths, t.window=13, s.window=13, robust=TRUE)#É multiplicativo. A componente sazonal varia
+stldec1 <- stl(UKDriverDeaths, t.window = 13, s.window = 13, robust = TRUE) #É multiplicativo. A componente sazonal varia
 autoplot(stldec1)
 
 stldec2 <- mstl(UKDriverDeaths) #Função automática
 autoplot(stldec2)
 
 
-###########################
-### Métodos de Previsão ###
-###########################
+###################################
+### Métodos Simples de Previsão ###
+###################################
 
 #Forecast - 1º Verificar melhor método de previsão retirar o último ano e prever
 
-UKDriverDeaths_menos_1_ano <- window(UKDriverDeaths, start = 1992, end = c(2006,4))
+UKDriverDeaths_menos_1_ano <- window(UKDriverDeaths, end = 1983)
 
 autoplot(UKDriverDeaths) +
   
@@ -235,10 +235,10 @@ autoplot(UKDriverDeaths) +
   autolayer(snaive(UKDriverDeaths_menos_1_ano, h = 12), #Previsão utilizando o método naive sazonal
             series = "Naive sazonal", PI = FALSE) +
   
-  autolayer(rwf(UKDriverDeaths_menos_1_ano,drift=T, h = 12), #Previsão utilizando o método drift
+  autolayer(rwf(UKDriverDeaths_menos_1_ano, drift = T, h = 12), #Previsão utilizando o método drift
             series = "Drift", PI = FALSE) +
   
-  ggtitle("Previsões para a produção trimestral de cerveja") +
+  ggtitle("Previsões para o nº de mortes") +
   xlab("Tempo (anos)") + ylab("Nº de Mortes") +
   guides(colour=guide_legend(title = "Previsões"))
 
