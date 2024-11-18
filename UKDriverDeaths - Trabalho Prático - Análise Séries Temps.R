@@ -298,51 +298,54 @@ autoplot(prev_stl_naive) + ylab("Nº de Mortes")
       
       ### Sem Box-Cox ###
 
-fcast_stlf_snaive <- stlf(UKDriverDeaths, method = "snaive")
-autoplot(fcast_stlf_snaive)
-res_stlf_snaive <- fcast_stlf_snaive$residuals #verificar os residuos
-checkresiduals(res_stlf_snaive)
+fcast_stlf_naive <- stlf(UKDriverDeaths, method = "naive") #usa o método Naive
+autoplot(fcast_stlf_naive)
 
 fcast_stlf <- stlf(UKDriverDeaths) #usa o método padrão de alisamento exponencial padrão
 autoplot(fcast_stlf)
-res_stlf <- fcast_stlf$residuals #verificar os residuos
-checkresiduals(res_stlf)
 
 
       ### Com Box-Cox ###
 
-fcast_stlf_snaive_bc <- stlf(UKDriverDeaths, method = "snaive", lambda = "auto") #utiliza o método Box-Cox
-autoplot(fcast_stlf_snaive_bc)
-res_stlf_snaive_bc <- fcast_stlf_snaive_bc$residuals #verificar os residuos
-checkresiduals(res_stlf_snaive_bc)
+fcast_stlf_naive_bc <- stlf(UKDriverDeaths, method = "naive", lambda = "auto") #utiliza o método Box-Cox
+autoplot(fcast_stlf_naive_bc)
+
 fcast3$lambda #revela o valor de lambda utilizado
 
 fcast_stlf_bc <- stlf(UKDriverDeaths, lambda = "auto") #usa o método padrão de alisamento exponencial padrão
 autoplot(fcast_stlf_bc)
-res_stlf_bc <- fcast_stlf_bc$residuals #verificar os residuos
-checkresiduals(res_stlf_bc)
+
 
       ### com transformação logarítmica ###
 
-fcast_stlf_snaive_tl <- stlf(UKDriverDeaths, method = "snaive", lambda = 0) #aplica uma transformação logarítmica
-autoplot(fcast_stlf_snaive_tl, ylim = c(40,140))
-res_stlf_snaive_tl <- fcast_stlf_snaive_tl$residuals #verificar os residuos
-checkresiduals(res_stlf_snaive_tl)
+fcast_stlf_naive_tl <- stlf(UKDriverDeaths, method = "naive", lambda = 0) #aplica uma transformação logarítmica
+autoplot(fcast_stlf_naive_tl)
+
 fcast3$lambda #revela o valor de lambda utilizado
 
 fcast_stlf_tl <- stlf(UKDriverDeaths, lambda = 0) #usa o método padrão de alisamento exponencial padrão com uma transformação logarítmica
 autoplot(fcast_stlf_tl)
-res_stlf_tl <- fcast_stlf_tl$residuals #verificar os residuos
-checkresiduals(res_stlf_tl)
 
 
+    ### Nas previsões STLF, o Alisamento Exponencial é melhor que Naive para a Nossa Série ###
+    ### Comparação dos Ruídos utilizando as diferentes Transformações: Sem Box-Cox, Com Box-Cox, Com Transformação Logarítmica ###
 
-
+    ##Resíduos para STLF Com Transformação Sem Box-Cox
+    res_stlf <- fcast_stlf$residuals #verificar os residuos
+    autoplot(res_stlf)
+    
+    ##Resíduos para STLF Com Transformação Com Box-Cox
+    res_stlf_bc <- fcast_stlf_bc$residuals #verificar os residuos
+    autoplot(res_stlf_bc)
+    
+    ##Resíduos para STLF Com Transformação Logarítmica
+    res_stlf_tl <- fcast_stlf_tl$residuals #verificar os residuos
+    autoplot(res_stlf_tl)
 
 
 #Previsões utilizando o Alisamento Exponencial Simples
 aliex_simples <- ses(UKDriverDeaths, h = 12) #previsão para 12 meses utilizando Alis. Exp. Simples
-aliex_simples
+autoplot(aliex_simples)
 
 summary(aliex_simples) #perimite obter alpha e l_0
 
@@ -363,79 +366,41 @@ autoplot (aliex_simples) +
   ylab("Nº de mortes") + xlab("Year")
 
 
-#Previsões com alisamento exponencial utilizando o método de Holt (simples)
-mortes <- window(UKDriverDeaths)
-autoplot(mortes)
-
-aliex_holt <- holt(mortes, h = 24) #previsão utilizando alisamento exponencial com tendência para 24 meses (2 anos)
+#Previsões com Alisamento Exponencial Duplo: Métodos de Holt e de Holt Damped (Amortecido)
+aliex_holt <- holt(UKDriverDeaths, h = 12) #previsão utilizando alisamento exponencial com tendência para 12 meses (1 ano)
 aliex_holt
 
-autoplot(aliex_holt) #mostra gráfico com a previsão para 2 anos com alisamento exponencial usando método de Holt
-summary(aliex_holt)
-aliex_holt$fitted
-
-
-#Previsões com alisamento exponencial utilizando o método de Holt damped (amortecido)
-
-aliex_holt_damped_phi <- holt(mortes, damped = TRUE, phi = 0.9, h = 24) #Método de Holt amortecido
+aliex_holt_damped_phi <- holt(mortes, damped = TRUE, phi = 0.9, h = 12) #Método de Holt amortecido
 summary(aliex_holt_damped_phi)
 
 autoplot(mortes) +
   autolayer(aliex_holt, series = "Método de Holt", PI = FALSE) +
   autolayer(aliex_holt_damped_phi, series = "Método de Holt amortecido", PI = FALSE) +
-  ggtitle("Previsões") + xlab("Year") +
+  ggtitle("Previsões") + xlab("Ano") +
   ylab("Nº de mortes") +
   guides(colour=guide_legend(title = "Previsões"))
 
-
-aliex_holt_damped <- holt(mortes, damped = TRUE, h = 24) # Método de Holt amortecido sem definir phi, onde ele é estimado
-summary(aliex_holt_damped)
-
-autoplot(mortes) +
-  autolayer(aliex_holt, series = "Método de Holt", PI = FALSE) +
-  autolayer(aliex_holt_damped, series = "Método de Holt amortecido", PI = FALSE) +
-  ggtitle("Previsões") + xlab("Year") +
-  ylab("Nº de mortes") +
-  guides(colour=guide_legend(title = "Previsões"))
+summary(aliex_holt)
+aliex_holt$fitted
 
 
-#Método de Holt-Winters: Previsões aditivas e multiplicativas e com damped
+#Previsões com Alisamento Exponencial Triplo: Métodos de Holt-Winters e de Holt-Winters Damped: Previsões aditivas e multiplicativas
 
+##Holt-Winters: Aditivo e Multiplicativo
 hw_adit <- hw(UKDriverDeaths, seasonal = "additive")
 hw_mult <- hw(UKDriverDeaths, seasonal = "multiplicative")
+
 autoplot(UKDriverDeaths) +
-  autolayer(hw_adit, series = "Holt-Winters previsões aditivas", PI = FALSE) +
-  autolayer(hw_mult, series = "Holt-Winters previsões multiplicativas", PI = FALSE) +
+  autolayer(hw_adit, series = "Holt-Winters previsões aditivas", PI = TRUE) +
+  autolayer(hw_mult, series = "Holt-Winters previsões multiplicativas", PI = TRUE) +
   xlab("Ano") + ylab("Nº de mortes") +
-  ggtitle("Turistas internacionais") +
+  ggtitle("Previsões") +
   guides(colour=guide_legend(title = "Previsões"))
 
 summary(hw_adit)
 summary(hw_mult)
 accuracy(hw_adit)
 accuracy(hw_mult)
-
-
-# Modelo Holt-Winters com sazonalidade multiplicativa e amortecimento retirando 1 ano
-fc_multiplicativo <- hw(UKDriverDeaths_menos_1_ano, damped = TRUE, seasonal = "multiplicative", h = 12)
-
-# Plot das previsões multiplicativas com intervalo de confiança
-autoplot(UKDriverDeaths) +
-  autolayer(fc_multiplicativo, series = "HW multi damped", PI = TRUE) +
-  guides(colour = guide_legend(title = "Previsões Mensais"))
-
-# Modelo Holt-Winters com sazonalidade aditiva e amortecimento
-fc_aditivo <- hw(UKDriverDeaths_menos_1_ano, damped = TRUE, seasonal = "additive", h = 12)
-
-# Plot das previsões aditivas com intervalo de confiança
-autoplot(UKDriverDeaths) +
-  autolayer(fc_aditivo, series = "HW addit damped", PI = TRUE) +
-  guides(colour = guide_legend(title = "Previsões Mensais"))
-
-# Resumo dos modelos para observar parâmetros e erros
-summary(fc_multiplicativo)
-summary(fc_aditivo)
-
 
 #Selação do Modelo
 #Critério de Informação de Akaike (AIC)
@@ -444,12 +409,12 @@ summary(fc_aditivo)
 #pois indica uma combinação ideal entre ajuste e simplicidade (penalizando modelos mais complexos).
 
 # Calculando AIC e BIC para o modelo com sazonalidade multiplicativa
-AIC_multiplicativo <- AIC(fc_multiplicativo$model)
-BIC_multiplicativo <- BIC(fc_multiplicativo$model)
+AIC_multiplicativo <- AIC(hw_mult$model)
+BIC_multiplicativo <- BIC(hw_mult$model)
 
 # Calculando AIC e BIC para o modelo com sazonalidade aditiva
-AIC_aditivo <- AIC(fc_aditivo$model)
-BIC_aditivo <- BIC(fc_aditivo$model)
+AIC_aditivo <- AIC(hw_adit$model)
+BIC_aditivo <- BIC(hw_adit$model)
 
 # Exibindo os valores de AIC e BIC para comparação
 cat("Modelo Multiplicativo: AIC =", AIC_multiplicativo, ", BIC =", BIC_multiplicativo, "\n")
@@ -466,4 +431,105 @@ if (BIC_multiplicativo < BIC_aditivo) {
   cat("Modelo multiplicativo tem menor BIC\n")
 } else {
   cat("Modelo aditivo tem menor BIC\n")
+}
+
+
+#Holt-Winters Damped: Aditivo e Multiplicativo
+hw_adit_damped <- hw(UKDriverDeaths, damped = TRUE, seasonal = "additive")
+hw_mult_damped <- hw(UKDriverDeaths, damped = TRUE, seasonal = "multiplicative")
+
+autoplot(UKDriverDeaths) +
+  autolayer(hw_adit_damped, series = "HW addit damped", PI = TRUE) +
+  autolayer(hw_mult_damped, series = "HW multi damped", PI = TRUE) +
+  xlab("Ano") + ylab("Nº de mortes") +
+  ggtitle("Previsões") +
+  guides(colour=guide_legend(title = "Previsões"))
+
+
+# Resumo dos modelos para observar parâmetros e erros
+summary(fc_multiplicativo)
+summary(fc_aditivo)
+
+# Calculando AIC e BIC para o modelo com sazonalidade multiplicativa
+AIC_multiplicativo <- AIC(hw_mult_damped$model)
+BIC_multiplicativo <- BIC(hw_mult_damped$model)
+
+# Calculando AIC e BIC para o modelo com sazonalidade aditiva
+AIC_aditivo <- AIC(hw_adit_damped$model)
+BIC_aditivo <- BIC(hw_adit_damped$model)
+
+# Exibindo os valores de AIC e BIC para comparação
+cat("Modelo Multiplicativo: AIC =", AIC_multiplicativo, ", BIC =", BIC_multiplicativo, "\n")
+cat("Modelo Aditivo: AIC =", AIC_aditivo, ", BIC =", BIC_aditivo, "\n")
+
+# Comparando os valores
+if (AIC_multiplicativo < AIC_aditivo) {
+  cat("Modelo multiplicativo tem menor AIC\n")
+} else {
+  cat("Modelo aditivo tem menor AIC\n")
+}
+
+if (BIC_multiplicativo < BIC_aditivo) {
+  cat("Modelo multiplicativo tem menor BIC\n")
+} else {
+  cat("Modelo aditivo tem menor BIC\n")
+}
+
+
+###AIC e BIC para Verificar Melhor Modelo de Previsões de Alisamento Exponenial 
+###Triplo Para A Nossa Série Entre Método de Holt-Winters Multiplicativo e Método de Holt-Winters Damped Multiplicativo
+
+# Calculando AIC e BIC para o modelo com sazonalidade multiplicativa
+AIC_multiplicativo <- AIC(hw_mult$model)
+BIC_multiplicativo <- BIC(hw_mult$model)
+
+# Calculando AIC e BIC para o modelo com sazonalidade aditiva
+AIC_multiplicativo_damped <- AIC(hw_mult_damped$model)
+BIC_multiplicativo_damped <- BIC(hw_mult_damped$model)
+
+# Exibindo os valores de AIC e BIC para comparação
+cat("Modelo Multiplicativo: AIC =", AIC_multiplicativo, ", BIC =", BIC_multiplicativo, "\n")
+cat("Modelo Multiplicativo Damped: AIC =", AIC_multiplicativo_damped, ", BIC =", BIC_multiplicativo_damped, "\n")
+
+# Comparando os valores
+if (AIC_multiplicativo < AIC_multiplicativo_damped) {
+  cat("Modelo multiplicativo tem menor AIC\n")
+} else {
+  cat("Modelo multiplicativo damped tem menor AIC\n")
+}
+
+if (BIC_multiplicativo < BIC_multiplicativo_damped) {
+  cat("Modelo multiplicativo tem menor BIC\n")
+} else {
+  cat("Modelo multiplicativo damped tem menor BIC\n")
+}
+
+
+###Conclusão Melhor Método de Previsão Para A Nossa Série: STLF com Transformação Logarítmica 
+###utilizando o Método de Alisamento Exponencial VS Alisamento Exponencial Triplo Utilizando o 
+###Método de Holt-Winters Damped Multiplicativo
+
+# Calculando AIC e BIC para o modelo com sazonalidade multiplicativa
+AIC_fcast_stlf_tl <- AIC(fcast_stlf_tl$model)
+BIC_fcast_stlf_tl <- BIC(fcast_stlf_tl$model)
+
+# Calculando AIC e BIC para o modelo com sazonalidade aditiva
+AIC_multiplicativo_damped <- AIC(hw_mult_damped$model)
+BIC_multiplicativo_damped <- BIC(hw_mult_damped$model)
+
+# Exibindo os valores de AIC e BIC para comparação
+cat("Modelo STLF Tranformação Logarítmica Alisamento Exponencial: AIC =", AIC_fcast_stlf_tl, ", BIC =", BIC_fcast_stlf_tl, "\n")
+cat("Modelo Multiplicativo Damped: AIC =", AIC_multiplicativo_damped, ", BIC =", BIC_multiplicativo_damped, "\n")
+
+# Comparando os valores
+if (AIC_fcast_stlf_tl < AIC_multiplicativo_damped) {
+  cat("Modelo STLF Tranformação Logarítmica Alisamento Exponencial tem menor AIC\n")
+} else {
+  cat("Modelo multiplicativo damped tem menor AIC\n")
+}
+
+if (BIC_fcast_stlf_tl < BIC_multiplicativo_damped) {
+  cat("Modelo STLF Tranformação Logarítmica Alisamento Exponencial tem menor BIC\n")
+} else {
+  cat("Modelo multiplicativo damped tem menor BIC\n")
 }
